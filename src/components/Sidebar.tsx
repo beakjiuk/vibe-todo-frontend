@@ -39,7 +39,7 @@ const icoProfile = (
 );
 
 export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
 
@@ -84,21 +84,30 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
       </div>
 
       <NavLink className="sidebar-user" to="/profile" title="마이페이지">
-        <span
-          className={`app-avatar app-avatar--sidebar${chip.photoURL ? ' app-avatar--photo' : ''}`}
-          id="profileAvatar"
-          aria-hidden
-          style={
-            chip.photoURL
-              ? { backgroundImage: `url(${JSON.stringify(chip.photoURL)})` }
-              : undefined
-          }
-        >
-          {!chip.photoURL ? chip.initial : null}
-        </span>
+        {loading && !user ? (
+          <span
+            className="app-avatar app-avatar--sidebar skel"
+            id="profileAvatar"
+            aria-hidden
+            style={{ borderRadius: '50%', width: 44, height: 44 }}
+          />
+        ) : (
+          <span
+            className={`app-avatar app-avatar--sidebar${chip.photoURL ? ' app-avatar--photo' : ''}`}
+            id="profileAvatar"
+            aria-hidden
+            style={chip.photoURL ? { backgroundImage: `url(${JSON.stringify(chip.photoURL)})` } : undefined}
+          >
+            {!chip.photoURL ? chip.initial : null}
+          </span>
+        )}
         <div className="sidebar-user__meta">
           <span className="app-nickname sidebar-nickname" id="userNickname">
-            {chip.nickname}
+            {loading && !user ? (
+              <span className="skel skel-line" style={{ width: 92, display: 'inline-block' }} aria-hidden />
+            ) : (
+              chip.nickname
+            )}
           </span>
         </div>
       </NavLink>

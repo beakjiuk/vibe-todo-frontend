@@ -1,119 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBodyClass } from '../hooks/useBodyClass';
 
-const VIDEO_ID = 'AlxNuMXkKqM';
-const INTRO_VOLUME = 38;
-
-function embedUrl() {
-  const base = `https://www.youtube.com/embed/${VIDEO_ID}?enablejsapi=1&rel=0&modestbranding=1&playsinline=1&autoplay=1&mute=0`;
-  try {
-    const { protocol, origin } = window.location;
-    if (protocol === 'http:' || protocol === 'https:') {
-      return `${base}&origin=${encodeURIComponent(origin)}`;
-    }
-  } catch {
-    /* ignore */
-  }
-  return base;
-}
-
 export function LandingPage() {
   useBodyClass('landing-body');
-  const [showLanding, setShowLanding] = useState(false);
-  const transitioned = useRef(false);
-  const playerRef = useRef<{ destroy?: () => void } | null>(null);
-  const apiHooked = useRef(false);
-
-  const goToLanding = useCallback(() => {
-    if (transitioned.current) return;
-    transitioned.current = true;
-    try {
-      playerRef.current?.destroy?.();
-    } catch {
-      /* ignore */
-    }
-    playerRef.current = null;
-    setShowLanding(true);
-  }, []);
-
-  const hookPlayer = useCallback(() => {
-    if (apiHooked.current || !window.YT?.Player) return;
-    apiHooked.current = true;
-    playerRef.current = new window.YT.Player('ytEmbed', {
-      events: {
-        onReady: (e) => {
-          const p = e.target;
-          try {
-            p.unMute?.();
-            p.setVolume?.(INTRO_VOLUME);
-          } catch {
-            /* ignore */
-          }
-        },
-        onStateChange: (e) => {
-          if (e.data === window.YT?.PlayerState?.ENDED) {
-            goToLanding();
-          }
-        },
-      },
-    });
-  }, [goToLanding]);
-
-  useEffect(() => {
-    const onReady = () => hookPlayer();
-    window.addEventListener('youtube-iframe-api-ready', onReady);
-    queueMicrotask(() => {
-      if (window.YT?.Player) hookPlayer();
-    });
-    return () => window.removeEventListener('youtube-iframe-api-ready', onReady);
-  }, [hookPlayer]);
-
-  useEffect(() => {
-    const onLoad = () => {
-      if (window.YT?.Player) hookPlayer();
-    };
-    window.addEventListener('load', onLoad);
-    return () => window.removeEventListener('load', onLoad);
-  }, [hookPlayer]);
 
   return (
     <>
-      <section
-        id="videoIntro"
-        className={`video-intro${showLanding ? ' is-hidden' : ''}`}
-        aria-label="인트로 영상"
-      >
-        <div className="video-intro__stack">
-          <div className="video-intro__toolbar">
-            <button
-              type="button"
-              className="video-intro__skip"
-              lang="en"
-              aria-label="Skip intro video"
-              onClick={goToLanding}
-            >
-              Skip
-            </button>
-          </div>
-          <div className="video-intro__frame">
-            <iframe
-              id="ytEmbed"
-              title="인트로 영상"
-              src={embedUrl()}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            />
-          </div>
-        </div>
-        <p className="video-intro__hint">
-          인트로 영상은 기본 볼륨 38%로 재생됩니다. 일부 브라우저는 소리 있는 자동 재생을 제한할 수 있어요.
-        </p>
-      </section>
-
       <main
         id="mainLanding"
-        className={`main-landing${showLanding ? ' is-active' : ' is-hidden'}`}
+        className="main-landing is-active"
         aria-live="polite"
       >
         <div className="hero">

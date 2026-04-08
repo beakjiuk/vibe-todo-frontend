@@ -16,6 +16,7 @@ function formatMoney(n: number) {
 export function AccountPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allLedger, setAllLedger] = useState<Record<string, LedgerDoc & { id: string }>>({});
+  const [loadingLedger, setLoadingLedger] = useState(true);
   const [view, setView] = useState(() => new Date());
   const [selectedKey, setSelectedKey] = useState(() => todayKey());
   const [modalOpen, setModalOpen] = useState(false);
@@ -24,6 +25,7 @@ export function AccountPage() {
   const [category, setCategory] = useState('기타');
   const [ledgerDate, setLedgerDate] = useState(selectedKey);
   const [memo, setMemo] = useState('');
+  const [savingEntry, setSavingEntry] = useState(false);
   const [toast, setToast] = useState('');
 
   const showToast = (msg: string) => {
@@ -48,6 +50,7 @@ export function AccountPage() {
   }, [ledgerType]);
 
   const loadLedger = useCallback(async () => {
+    setLoadingLedger(true);
     try {
       const arr = await listLedger();
       const next: Record<string, LedgerDoc & { id: string }> = {};
@@ -66,6 +69,8 @@ export function AccountPage() {
       setAllLedger(next);
     } catch (e) {
       showToast(e instanceof Error ? e.message : '목록을 불러오지 못했습니다.');
+    } finally {
+      setLoadingLedger(false);
     }
   }, []);
 
@@ -155,6 +160,8 @@ export function AccountPage() {
     const type = ledgerType;
     const amt = Math.round(Number(amount));
     if (!amt || amt < 1) return;
+    setSavingEntry(true);
+    let saved = false;
     try {
       await createLedgerEntry({
         type,
@@ -163,10 +170,13 @@ export function AccountPage() {
         dateKey: ledgerDate,
         memo,
       });
+      saved = true;
     } catch (err) {
       showToast(err instanceof Error ? err.message : '저장하지 못했습니다.');
-      return;
+    } finally {
+      setSavingEntry(false);
     }
+    if (!saved) return;
     const dk = normalizeDateKey(ledgerDate) || ledgerDate;
     setSelectedKey(dk);
     const p = parseKey(dk);
@@ -200,18 +210,26 @@ export function AccountPage() {
         <div className="ledger-month-bar" id="ledgerMonthBar">
           <div className="ledger-stat">
             <span className="ledger-stat__label">이번 달 수입</span>
-            <strong className="ledger-stat__val ledger-stat__val--in">{formatMoney(mi)}</strong>
+            <strong className="ledger-stat__val ledger-stat__val--in">
+              {loadingLedger ? <span className="skel skel-line skel-line--lg" style={{ width: 110 }} /> : formatMoney(mi)}
+            </strong>
           </div>
           <div className="ledger-stat">
             <span className="ledger-stat__label">이번 달 지출</span>
-            <strong className="ledger-stat__val ledger-stat__val--out">{formatMoney(me)}</strong>
+            <strong className="ledger-stat__val ledger-stat__val--out">
+              {loadingLedger ? <span className="skel skel-line skel-line--lg" style={{ width: 110 }} /> : formatMoney(me)}
+            </strong>
           </div>
           <div className="ledger-stat">
             <span className="ledger-stat__label">순액</span>
             <strong
               className={`ledger-stat__val ledger-stat__val--net${mn < 0 ? ' ledger-stat__val--net-neg' : ''}`}
             >
-              {(mn >= 0 ? '+' : '−') + formatMoney(Math.abs(mn))}
+              {loadingLedger ? (
+                <span className="skel skel-line skel-line--lg" style={{ width: 130 }} />
+              ) : (
+                (mn >= 0 ? '+' : '−') + formatMoney(Math.abs(mn))
+              )}
             </strong>
           </div>
         </div>
@@ -303,43 +321,59 @@ export function AccountPage() {
           <section className="task-card ledger-day-card">
             <h3>내역 · {dayLabel}</h3>
             <ul className="ledger-list" id="ledgerList">
-              {items.map((e) => (
-                <li key={e.id} className="ledger-item">
-                  <span
-                    className={`ledger-item__tag ${e.type === 'income' ? 'ledger-item__tag--in' : 'ledger-item__tag--out'}`}
-                  >
-                    {e.type === 'income' ? '수입' : '지출'}
-                  </span>
-                  <div className="ledger-item__body">
-                    <div className="ledger-item__cat">{e.category || '기타'}</div>
-                    <div className="ledger-item__memo">{e.memo ? String(e.memo).slice(0, 80) : ' '}</div>
-                  </div>
-                  <div
-                    className={`ledger-item__amt ${e.type === 'income' ? 'ledger-item__amt--in' : 'ledger-item__amt--out'}`}
-                  >
-                    {(e.type === 'income' ? '+' : '−') + formatMoney(Math.round(Number(e.amount) || 0))}
-                  </div>
-                  <div className="ledger-item__actions">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!window.confirm('이 내역을 삭제할까요?')) return;
-                        try {
-                          await deleteLedgerEntry(e.id);
-                          showToast('삭제했습니다.');
-                          await loadLedger();
-                        } catch (err) {
-                          showToast(err instanceof Error ? err.message : '삭제하지 못했습니다.');
-                        }
-                      }}
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {loadingLedger
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <li key={`sk-${i}`} className="ledger-item" aria-hidden>
+                      <span className="skel skel-line" style={{ width: 56, height: 22, borderRadius: 999 }} />
+                      <div className="ledger-item__body">
+                        <div className="skel skel-line skel-line--lg" style={{ width: `${52 + i * 6}%` }} />
+                        <div className="skel skel-line skel-line--sm" style={{ width: `${40 + i * 4}%`, marginTop: 8 }} />
+                      </div>
+                      <div className="skel skel-line skel-line--lg" style={{ width: 96 }} />
+                      <div className="ledger-item__actions" style={{ opacity: 0.7 }}>
+                        <span className="skel skel-block" style={{ width: 48, height: 30, borderRadius: 10 }} />
+                      </div>
+                    </li>
+                  ))
+                : items.map((e) => (
+                    <li key={e.id} className="ledger-item">
+                      <span
+                        className={`ledger-item__tag ${e.type === 'income' ? 'ledger-item__tag--in' : 'ledger-item__tag--out'}`}
+                      >
+                        {e.type === 'income' ? '수입' : '지출'}
+                      </span>
+                      <div className="ledger-item__body">
+                        <div className="ledger-item__cat">{e.category || '기타'}</div>
+                        <div className="ledger-item__memo">{e.memo ? String(e.memo).slice(0, 80) : ' '}</div>
+                      </div>
+                      <div
+                        className={`ledger-item__amt ${
+                          e.type === 'income' ? 'ledger-item__amt--in' : 'ledger-item__amt--out'
+                        }`}
+                      >
+                        {(e.type === 'income' ? '+' : '−') + formatMoney(Math.round(Number(e.amount) || 0))}
+                      </div>
+                      <div className="ledger-item__actions">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!window.confirm('이 내역을 삭제할까요?')) return;
+                            try {
+                              await deleteLedgerEntry(e.id);
+                              showToast('삭제했습니다.');
+                              await loadLedger();
+                            } catch (err) {
+                              showToast(err instanceof Error ? err.message : '삭제하지 못했습니다.');
+                            }
+                          }}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </li>
+                  ))}
             </ul>
-            {items.length === 0 ? (
+            {!loadingLedger && items.length === 0 ? (
               <p className="empty-hint" id="ledgerEmptyHint">
                 이 날짜에는 내역이 없습니다.
               </p>
@@ -416,8 +450,11 @@ export function AccountPage() {
               <button type="button" onClick={() => setModalOpen(false)}>
                 취소
               </button>
-              <button type="submit" className="primary">
-                저장
+              <button type="submit" className="primary" disabled={savingEntry}>
+                <span className="btn-skel">
+                  {savingEntry ? <span className="skel btn-skel__bar" aria-hidden /> : null}
+                  <span style={savingEntry ? { opacity: 0.92 } : undefined}>{savingEntry ? '저장 중' : '저장'}</span>
+                </span>
               </button>
             </div>
           </form>

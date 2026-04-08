@@ -19,10 +19,13 @@ function formatNoteDate(ts: number | undefined) {
 
 export function NotesPage() {
   const [notes, setNotes] = useState<NoteRow[]>([]);
+  const [loadingNotes, setLoadingNotes] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [deletingNote, setDeletingNote] = useState(false);
   const [toast, setToast] = useState('');
 
   const showToast = (msg: string) => {
@@ -31,6 +34,7 @@ export function NotesPage() {
   };
 
   const loadNotes = useCallback(async () => {
+    setLoadingNotes(true);
     try {
       const arr = await listNotes();
       const rows: NoteRow[] = [];
@@ -41,6 +45,8 @@ export function NotesPage() {
       setNotes(rows);
     } catch (e) {
       showToast(e instanceof Error ? e.message : '목록을 불러오지 못했습니다.');
+    } finally {
+      setLoadingNotes(false);
     }
   }, []);
 
@@ -71,6 +77,7 @@ export function NotesPage() {
       return;
     }
 
+    setSavingNote(true);
     try {
       if (editingId) {
         await updateNote(editingId, { title: t || '(제목 없음)', body: b });
@@ -83,11 +90,14 @@ export function NotesPage() {
       await loadNotes();
     } catch (err) {
       showToast(err instanceof Error ? err.message : '저장하지 못했습니다.');
+    } finally {
+      setSavingNote(false);
     }
   };
 
   const onDelete = async () => {
     if (!editingId || !window.confirm('이 노트를 삭제할까요?')) return;
+    setDeletingNote(true);
     try {
       await deleteNote(editingId);
       setModalOpen(false);
@@ -95,6 +105,8 @@ export function NotesPage() {
       await loadNotes();
     } catch (err) {
       showToast(err instanceof Error ? err.message : '삭제하지 못했습니다.');
+    } finally {
+      setDeletingNote(false);
     }
   };
 
@@ -112,7 +124,18 @@ export function NotesPage() {
           </button>
         </div>
         <div className="notes-board" id="notesList">
-          {notes.length === 0 ? (
+          {loadingNotes ? (
+            <div className="notes-skel" aria-hidden>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={`sk-${i}`} className="note-card">
+                  <div className="skel skel-line skel-line--lg" style={{ width: `${64 - i * 4}%` }} />
+                  <div className="skel skel-line" style={{ width: '92%', marginTop: 10 }} />
+                  <div className="skel skel-line" style={{ width: '88%', marginTop: 8 }} />
+                  <div className="skel skel-line skel-line--sm" style={{ width: 120, marginTop: 14 }} />
+                </div>
+              ))}
+            </div>
+          ) : notes.length === 0 ? (
             <p className="notes-empty">
               노트가 없습니다. <strong>새 노트</strong>로 메모를 추가해 보세요.
             </p>
@@ -173,15 +196,22 @@ export function NotesPage() {
                 id="noteModalDelete"
                 hidden={!editingId}
                 onClick={() => void onDelete()}
+                disabled={deletingNote || savingNote}
               >
-                삭제
+                <span className="btn-skel">
+                  {deletingNote ? <span className="skel btn-skel__bar" aria-hidden /> : null}
+                  <span style={deletingNote ? { opacity: 0.92 } : undefined}>{deletingNote ? '삭제 중' : '삭제'}</span>
+                </span>
               </button>
               <div className="modal-actions__right">
-                <button type="button" id="noteModalCancel" onClick={() => setModalOpen(false)}>
+                <button type="button" id="noteModalCancel" onClick={() => setModalOpen(false)} disabled={savingNote || deletingNote}>
                   취소
                 </button>
-                <button type="submit" className="primary" id="noteModalSave">
-                  저장
+                <button type="submit" className="primary" id="noteModalSave" disabled={savingNote || deletingNote}>
+                  <span className="btn-skel">
+                    {savingNote ? <span className="skel btn-skel__bar" aria-hidden /> : null}
+                    <span style={savingNote ? { opacity: 0.92 } : undefined}>{savingNote ? '저장 중' : '저장'}</span>
+                  </span>
                 </button>
               </div>
             </div>

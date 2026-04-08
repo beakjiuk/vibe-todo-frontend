@@ -18,12 +18,14 @@ const TODO_API_LABEL = 'REST API';
 export function TodosPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [allTodos, setAllTodos] = useState<TodoDoc[]>([]);
+  const [loadingTodos, setLoadingTodos] = useState(true);
   const [view, setView] = useState(() => new Date());
   const [selectedKey, setSelectedKey] = useState(() => todayKey());
   const [apiStatus, setApiStatus] = useState('');
   const [apiErr, setApiErr] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [savingTodo, setSavingTodo] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDate, setModalDate] = useState(selectedKey);
   const [toast, setToast] = useState('');
@@ -45,6 +47,7 @@ export function TodosPage() {
   const loadTodos = useCallback(async () => {
     setApiStatus('할 일 불러오는 중…');
     setApiErr(false);
+    setLoadingTodos(true);
     try {
       const list = await listTodos();
       setAllTodos(list);
@@ -55,6 +58,8 @@ export function TodosPage() {
       setApiStatus(e instanceof Error ? e.message : '서버에 연결할 수 없습니다.');
       setApiErr(true);
       showToast('할 일 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoadingTodos(false);
     }
   }, []);
 
@@ -140,6 +145,7 @@ export function TodosPage() {
       showToast('날짜를 선택해 주세요.');
       return;
     }
+    setSavingTodo(true);
     try {
       if (editingId) {
         await updateTodo(editingId, { title, dateKey: dk });
@@ -156,6 +162,8 @@ export function TodosPage() {
       await loadTodos();
     } catch (err) {
       showToast(err instanceof Error ? err.message : '저장하지 못했습니다.');
+    } finally {
+      setSavingTodo(false);
     }
   };
 
@@ -267,7 +275,21 @@ export function TodosPage() {
               {apiStatus}
             </p>
             <ul className="task-list">
-              {todos.map((t) => {
+              {loadingTodos
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <li key={`sk-${i}`} className="task-item" aria-hidden>
+                      <div className="task-body" style={{ width: '100%' }}>
+                        <div className="skel skel-line skel-line--lg" style={{ width: `${70 - i * 6}%` }} />
+                        <div className="skel skel-line skel-line--sm" style={{ width: `${46 + i * 4}%`, marginTop: 8 }} />
+                      </div>
+                      <div className="task-actions" style={{ opacity: 0.7 }}>
+                        <span className="skel skel-block" style={{ width: 72, height: 30, borderRadius: 10 }} />
+                        <span className="skel skel-block" style={{ width: 52, height: 30, borderRadius: 10 }} />
+                        <span className="skel skel-block" style={{ width: 52, height: 30, borderRadius: 10 }} />
+                      </div>
+                    </li>
+                  ))
+                : todos.map((t) => {
                 const id = todoId(t);
                 const completed = Boolean(t.completed);
                 const created = t.createdAt
@@ -325,7 +347,7 @@ export function TodosPage() {
                 );
               })}
             </ul>
-            {todos.length === 0 ? (
+            {!loadingTodos && todos.length === 0 ? (
               <p className="empty-hint">이 날짜에는 할 일이 없습니다.</p>
             ) : null}
             <button type="button" className="btn-add" onClick={openModalAdd}>
@@ -382,8 +404,11 @@ export function TodosPage() {
               <button type="button" onClick={closeModal}>
                 취소
               </button>
-              <button type="submit" className="primary">
-                저장
+              <button type="submit" className="primary" disabled={savingTodo}>
+                <span className="btn-skel">
+                  {savingTodo ? <span className="skel btn-skel__bar" aria-hidden /> : null}
+                  <span style={savingTodo ? { opacity: 0.92 } : undefined}>{savingTodo ? '저장 중' : '저장'}</span>
+                </span>
               </button>
             </div>
           </form>

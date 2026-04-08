@@ -113,7 +113,10 @@ export function SignupPage() {
               <input id="password2" name="password2" type="password" autoComplete="new-password" required />
             </div>
             <button type="submit" className="btn-auth" disabled={submitting}>
-              가입하기
+              <span className="btn-auth__label">
+                {submitting ? <span className="btn-auth__skel" aria-hidden /> : null}
+                <span style={submitting ? { opacity: 0.92 } : undefined}>{submitting ? '처리 중' : '가입하기'}</span>
+              </span>
             </button>
           </form>
           <div className="auth-footer">

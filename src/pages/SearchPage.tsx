@@ -139,7 +139,20 @@ export function SearchPage() {
               키워드를 입력해 보세요. 할 일 제목, 가계부 카테고리·메모·금액, 노트 제목·본문이 검색됩니다.
             </p>
           ) : loading ? (
-            <p className="search-loading">검색 중…</p>
+            <div className="skel-card" aria-hidden>
+              <div className="skel-stack">
+                <span className="skel skel-line skel-line--lg" style={{ width: '38%' }} />
+                <span className="skel skel-line" style={{ width: '82%' }} />
+                <span className="skel skel-line skel-line--sm" style={{ width: '66%' }} />
+                <div style={{ height: 8 }} />
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={`sk-${i}`} className="skel-row">
+                    <span className="skel skel-line" style={{ width: 54, height: 22, borderRadius: 999 }} />
+                    <span className="skel skel-line" style={{ width: `${72 - i * 6}%` }} />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : !hasAny ? (
             <p className="search-empty">
               「<strong>{qRaw.trim()}</strong>」에 맞는 결과가 없습니다.

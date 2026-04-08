@@ -91,7 +91,10 @@ export function LoginPage() {
               <input id="password" name="password" type="password" autoComplete="current-password" required />
             </div>
             <button type="submit" className="btn-auth" disabled={submitting}>
-              들어가기
+              <span className="btn-auth__label">
+                {submitting ? <span className="btn-auth__skel" aria-hidden /> : null}
+                <span style={submitting ? { opacity: 0.92 } : undefined}>{submitting ? '확인 중' : '들어가기'}</span>
+              </span>
             </button>
           </form>
           <div className="auth-footer">

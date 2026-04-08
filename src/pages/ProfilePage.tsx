@@ -9,7 +9,7 @@ import { clearSidebarProfileCache } from '../lib/sidebarCache';
 import { Toast } from '../components/Toast';
 
 export function ProfilePage() {
-  const { user, refreshUser, logout } = useAuth();
+  const { user, loading, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [nickname, setNickname] = useState('');
@@ -105,6 +105,31 @@ export function ProfilePage() {
       </header>
 
       <main className="app-main profile-page-main">
+        {loading && !user ? (
+          <div className="task-card profile-card" aria-hidden>
+            <h2 className="profile-heading">
+              <span className="skel skel-line skel-line--lg" style={{ width: 160, display: 'inline-block' }} />
+            </h2>
+            <p className="profile-lead">
+              <span className="skel skel-line" style={{ width: '72%', display: 'inline-block' }} />
+            </p>
+            <div className="modal-field profile-field">
+              <span className="skel skel-line skel-line--sm" style={{ width: 90, display: 'inline-block' }} />
+              <div className="skel skel-block" style={{ width: '100%', height: 40, marginTop: 8, borderRadius: 12 }} />
+            </div>
+            <div className="modal-field profile-field">
+              <span className="skel skel-line skel-line--sm" style={{ width: 140, display: 'inline-block' }} />
+              <div className="skel skel-block" style={{ width: '100%', height: 40, marginTop: 8, borderRadius: 12 }} />
+            </div>
+            <div className="modal-field profile-field">
+              <span className="skel skel-line skel-line--sm" style={{ width: 220, display: 'inline-block' }} />
+              <div className="skel skel-block" style={{ width: '100%', height: 40, marginTop: 8, borderRadius: 12 }} />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <span className="skel skel-block" style={{ width: 110, height: 40, borderRadius: 12, display: 'inline-block' }} />
+            </div>
+          </div>
+        ) : null}
         <div className="task-card profile-card">
           <h2 className="profile-heading">내 프로필</h2>
           <p className="profile-lead">닉네임은 회원가입 때 정한 값이 기본이에요. 여기서 바꿀 수 있어요.</p>
@@ -114,7 +139,7 @@ export function ProfilePage() {
           <form id="profileForm" onSubmit={(e) => void onSubmit(e)}>
             <div className="modal-field profile-field">
               <label htmlFor="profEmail">이메일</label>
-              <input id="profEmail" type="text" readOnly value={email} />
+              <input id="profEmail" type="text" readOnly value={email} disabled={!user} />
             </div>
             <div className="modal-field profile-field">
               <label htmlFor="profNickname">닉네임 (2~20자)</label>
@@ -126,6 +151,7 @@ export function ProfilePage() {
                 maxLength={20}
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
+                disabled={!user}
               />
             </div>
             <div className="modal-field profile-field">
@@ -139,13 +165,14 @@ export function ProfilePage() {
                 placeholder="이미지 URL 또는 블로그·홈페이지 링크"
                 value={photoURL}
                 onChange={(e) => setPhotoURL(e.target.value)}
+                disabled={!user}
               />
             </div>
             <p className="profile-hint">
               이미지 파일 주소(<code>.jpg</code>, <code>.png</code> 등)는 그대로 쓰고, 블로그·홈페이지처럼 글 페이지 주소를 넣으면
               대표 이미지(og:image 등)를 자동으로 찾아 프로필에 맞춥니다. 일부 사이트는 차단으로 실패할 수 있어요.
             </p>
-            <button type="submit" className="btn-add profile-save" id="profileSave" disabled={saving}>
+            <button type="submit" className="btn-add profile-save" id="profileSave" disabled={saving || !user}>
               저장
             </button>
           </form>
@@ -201,7 +228,10 @@ export function ProfilePage() {
               disabled={deleting}
               onClick={() => void onDeleteAccount()}
             >
-              탈퇴하기
+              <span className="btn-skel">
+                {deleting ? <span className="skel btn-skel__bar" aria-hidden /> : null}
+                <span style={deleting ? { opacity: 0.92 } : undefined}>{deleting ? '처리 중' : '탈퇴하기'}</span>
+              </span>
             </button>
           </div>
         </div>
