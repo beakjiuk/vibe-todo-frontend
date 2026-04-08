@@ -15,9 +15,27 @@ export function LandingPage() {
           <div className="hero-visual">
             <div className="hero-deco" aria-hidden />
             <div className="hero-card-ui" aria-hidden>
-              <span className="hero-card-ui__check" />
-              <span className="hero-card-ui__line" />
-              <span className="hero-card-ui__line hero-card-ui__line--short" />
+              <div className="hero-card-ui__top">
+                <span className="hero-card-ui__badge">TODAY</span>
+                <span className="hero-card-ui__chip">3 tasks</span>
+              </div>
+              <div className="hero-card-ui__list">
+                <div className="hero-card-ui__row">
+                  <span className="hero-card-ui__box" />
+                  <span className="hero-card-ui__line hero-card-ui__line--w1" />
+                </div>
+                <div className="hero-card-ui__row hero-card-ui__row--done">
+                  <span className="hero-card-ui__box hero-card-ui__box--done" />
+                  <span className="hero-card-ui__line hero-card-ui__line--w2" />
+                </div>
+                <div className="hero-card-ui__row">
+                  <span className="hero-card-ui__box" />
+                  <span className="hero-card-ui__line hero-card-ui__line--w3" />
+                </div>
+              </div>
+              <div className="hero-card-ui__progress">
+                <span className="hero-card-ui__progress-bar" />
+              </div>
             </div>
             <div className="hero-character-wrap">
               <div className="hero-character" aria-hidden>
