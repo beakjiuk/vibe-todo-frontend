@@ -247,17 +247,18 @@ body.landing-body {
   }
 }
 
-.hero-character-wrap {
+.hero-mascot-wrap {
   position: absolute;
-  right: 4%;
+  right: 2%;
   bottom: 0;
   z-index: 2;
   transform: translateX(40px);
   opacity: 0;
+  filter: drop-shadow(18px 22px 0 rgba(15, 23, 42, 0.06));
 }
 
-.main-landing.is-active .hero-character-wrap {
-  animation: hero-enter 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.main-landing.is-active .hero-mascot-wrap {
+  animation: hero-enter 1.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes hero-enter {
@@ -267,59 +268,22 @@ body.landing-body {
   }
 }
 
-.hero-character {
-  filter: drop-shadow(12px 18px 0 rgba(15, 23, 42, 0.06));
+.hero-mascot {
+  width: clamp(150px, 22vw, 230px);
+  height: auto;
+  display: block;
+  transform-origin: 50% 85%;
+  animation: mascot-bob 3.2s ease-in-out infinite;
+  will-change: transform;
 }
 
-.hero-character__bob {
-  animation: bob 2.4s ease-in-out infinite;
-}
-
-@keyframes bob {
+@keyframes mascot-bob {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-0.6deg);
   }
   50% {
-    transform: translateY(-10px);
-  }
-}
-
-.hero-character .swing-l {
-  animation: leg-swing 0.5s ease-in-out infinite;
-  transform-origin: top center;
-}
-
-.hero-character .swing-r {
-  animation: leg-swing 0.5s ease-in-out infinite reverse;
-  transform-origin: top center;
-}
-
-@keyframes leg-swing {
-  0%,
-  100% {
-    transform: rotate(-12deg);
-  }
-  50% {
-    transform: rotate(12deg);
-  }
-}
-
-.hero-character .wave-arm {
-  animation: wave-arm 2.8s ease-in-out infinite;
-  transform-origin: 70px 78px;
-}
-
-@keyframes wave-arm {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(-8deg);
-  }
-  50% {
-    transform: rotate(6deg);
+    transform: translateY(-10px) rotate(0.6deg);
   }
 }
 
@@ -443,7 +407,7 @@ body.landing-body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-character-wrap,
+  .hero-mascot-wrap,
   .hero-card-ui,
   .hero-title__line,
   .hero-sub,
@@ -453,10 +417,7 @@ body.landing-body {
     transform: none !important;
   }
 
-  .hero-character__bob,
-  .hero-character .swing-l,
-  .hero-character .swing-r,
-  .hero-character .wave-arm {
+  .hero-mascot {
     animation: none !important;
   }
 }
